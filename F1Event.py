@@ -17,7 +17,10 @@ race_type_enum = {
     'Q': 'Qualifying',
     'R': 'Race',
     'S': 'Sprint Race',
-    'SS': 'Sprint Shootout'
+    'SS': 'Sprint Shootout',
+    'FP1': 'FP1',
+    'FP2': 'FP2',
+    'FP3': 'FP3'
 }
 
 
@@ -26,9 +29,9 @@ class F1Event:
         self.year = year
         self.place = place
         self.modality = modality
-        if not os.path.exists('cache'):
-            os.makedirs('cache')
-        ff1.Cache.enable_cache('cache')
+        if not os.path.exists('../cache'):
+            os.makedirs('../cache')
+        ff1.Cache.enable_cache('../cache')
         self.event = ff1.get_session(self.year,self.place,self.modality)
         self.event.load()
         plotting.setup_mpl()
@@ -182,10 +185,10 @@ class F1Event:
         drv1_telemetry = drv1_laps.pick_fastest().get_telemetry().add_distance()
         return drv1_telemetry
     
-    def print_tyre_degredation(self, min_count=3, drv:str = None, correct_fuel=True):
+    def plot_tyre_degredation(self, drv:str = None):
         
         if drv != None:
-            tyredev = self.event.laps.pick_driver(drv)[self.event.laps.TrackStatus == '1']
+            tyredev = self.event.laps.pick_driver(drv).pick_quicklaps()
         else:
             tyredev = self.event.laps[self.event.laps.TrackStatus == '1']
         
@@ -208,35 +211,77 @@ class F1Event:
                   agg({'LapTime': ['min', 'count']}).reset_index()
         tyredev.columns = ['Compound', 'TyreLife', 'LapTime', 'Count']
 
-        # Only use combinations with a mimimum count ans remove first laps on tyre
-        tyredev = tyredev[(tyredev['Count'] >= min_count) & (tyredev['TyreLife'] > 1)]
 
-
-        fig, ax = plt.subplots(figsize=(12,6))
+        fig, ax = plt.subplots(figsize=(10,6))
         for tyre,color in zip(['SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'], ['red', 'yellow', 'white', 'green', 'blue']):
             df = tyredev[(tyredev['Compound'] == tyre)].dropna()
             if not df.empty:
-                df.plot('TyreLife', 'LapTime', ax=ax, color=color, label=tyre)
-        _ = ax.set_ylim((int(tyredev.LapTime.min()/10))*10, (int(tyredev.LapTime.max()/10)+1)*10)
-        _ = ax.set_title('Tyre degradation')
+                df.plot('TyreLife', 'LapTime', ax=ax, color=color, label=tyre, marker = 'o')
+        if(drv != None):
+            _ = ax.set_ylim((int(tyredev.LapTime.min()/10))*10, (int(tyredev.LapTime.max()/10)+1)*10)
+        
+        if(drv != None):
+            _ = ax.set_title(f"{drv} Tyre degradation - {self.event.event['EventName']} {self.year}")
+        else:
+            _ = ax.set_title(f"Tyre degradation - {self.event.event['EventName']} {self.year}")
         _ = ax.set_ylabel('Fuel-Corrected Laptime (s)')
+
+    def driver_laptimes(self, drv):
+        driver_laps = self.event.laps.pick_driver(drv).pick_quicklaps().reset_index()
+
+        nolaps = self.event.total_laps
+        totfuel = 110
+        secperkg = 0.03
+        driver_laps['Fuel'] = totfuel - (driver_laps['LapNumber'] * (totfuel / nolaps))
+        driver_laps['LapTime'] = driver_laps['LapTime'] / np.timedelta64(1, 's') - (secperkg * driver_laps['Fuel'])
+        fig, ax = plt.subplots(figsize=(8, 8))
+
+        sns.scatterplot(data=driver_laps,
+                        x="LapNumber",
+                        y="LapTime",
+                        ax=ax,
+                        hue="Compound",
+                        palette=ff1.plotting.COMPOUND_COLORS,
+                        s=80,
+                        linewidth=0,
+                        legend='auto')
+        plt.xlabel("Laps")
+        plt.ylabel("Fuel-Corrected Laptime")
+
 
     
     def engine_manufacter(self):
-        driver_pole = self.event.laps.pick_driver(self.event.results['Abbreviation'][0]).pick_fastest()
+        
+        list_fastest_laps = list()  
+        for drv in self.event.results['Abbreviation']:
+            drvs_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
+            list_fastest_laps.append(drvs_fastest_lap)
+        fastest_laps = Laps(list_fastest_laps).sort_values(by='LapTime').reset_index(drop=True)
+        driver_pole = fastest_laps.pick_fastest()
         lap_time_pole_string = strftimedelta( driver_pole['LapTime'], '%m:%s.%ms')
         plt.rcParams["figure.figsize"] = [12, 6]
         fig, ax = plt.subplots()
 
+        f1_teams_engine = {      'Red Bull Racing': 'Red Bull Racing', 
+                          'Ferrari': 'Ferrari',
+                          'Haas F1 Team': 'Ferrari', 
+                          'Aston Martin': 'Mercedes', 
+                          'Alpine' : 'Alpine',
+                          'Alfa Romeo': 'Ferrari',
+                          'AlphaTauri': 'Red Bull Racing', 
+                          'McLaren': 'Mercedes',
+                          'Mercedes': 'Mercedes',
+                          'Williams': 'Mercedes'}
+
         for drv in self.event.results['Abbreviation']:
                 drv_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
                 deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
-                color = ff1.plotting.team_color(drv_fastest_lap['Team'])
+                color = ff1.plotting.team_color(f1_teams_engine[drv_fastest_lap['Team']])
                 ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
                 ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
         ax.set(xlabel='Speed- Telem Max. (km/h)', ylabel= 'LapTime Delta(s)')
         plt.suptitle(f"LapTime by Engine Manufacturer\n{self.event.event['EventName']} {self.year} \n"
-                        f"Fastest Lap: ({lap_time_pole_string}) ({driver_pole['Driver']})")
+                        f"Fastest Lap: {lap_time_pole_string} ({driver_pole['Driver']})")
         plt.savefig('Engine', dpi=350)
 
     def tyre_strategy(self):
@@ -253,18 +298,28 @@ class F1Event:
             df = self.event.laps[self.event.laps.Compound == tyre][['Driver', 'LapNumber', 'Compound']]
             df.plot.scatter('LapNumber', 'Driver', ax=ax, color=color, s=16)
         ax.invert_yaxis()
-        ax.set_title('Tyre Strategy')
+        ax.set_title(f"Tyre Strategy - {self.event.event['EventName']} {self.year}")
         plt.show()
     
-    def race_trace_chart(self, drivers = []):
+    def race_trace_chart(self, drivers = [], inilap = None, nlaps = None):
+
+        if(nlaps == None):
+            nlaps = self.event.total_laps
+        
+        if(inilap == None):
+            inilap = 1
+
+        if(drivers == []):
+            drivers = list(np.unique(self.get_laps_race()['Driver']))
+        
         average_driver_laptime = []
-        for driver in self.event.results['Abbreviation'][1:10]:
+        for driver in self.event.results['Abbreviation'][:10]:
             driver_laps = self.event.laps.pick_driver(driver)
             driver_laps['LapTimeSeconds'] = driver_laps['Time'].dt.total_seconds()
             average_driver_laptime.append(driver_laps['LapTimeSeconds'].reset_index(drop = True))
         virtual_driver = pd.DataFrame(average_driver_laptime)
 
-        plt.rcParams["figure.figsize"] = [20, 8]
+        plt.rcParams["figure.figsize"] = [20, 10]
         plt.rcParams["figure.autolayout"] = True
         fig, ax = plt.subplots()
         color_list = []
@@ -277,9 +332,9 @@ class F1Event:
             driver_laps['LapTimeSeconds'] = driver_laps['Time'].dt.total_seconds()
             color = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop = True)[0])
             if color in color_list:
-                ax.plot(driver_laps['LapNumber'], virtual_driver.mean().reset_index(drop=True)[:len(driver_laps['LapTimeSeconds'])] - driver_laps['LapTimeSeconds'].reset_index(drop=True), marker = 'o', label= driver, color = color, ls='--')
+                ax.plot(driver_laps['LapNumber'][inilap - 1:nlaps], virtual_driver.mean().reset_index(drop=True)[inilap - 1:len(driver_laps['LapTimeSeconds'][:nlaps])] - driver_laps['LapTimeSeconds'].reset_index(drop=True)[inilap - 1:nlaps], marker = 'o', label= driver, color = color, ls='--')
             else:
-                ax.plot(driver_laps['LapNumber'], virtual_driver.mean().reset_index(drop=True)[:len(driver_laps['LapTimeSeconds'])] - driver_laps['LapTimeSeconds'].reset_index(drop=True), marker = 'o', label= driver)
+                ax.plot(driver_laps['LapNumber'][inilap - 1:nlaps], virtual_driver.mean().reset_index(drop=True)[inilap - 1:len(driver_laps['LapTimeSeconds'][:nlaps])] - driver_laps['LapTimeSeconds'].reset_index(drop=True)[inilap - 1:nlaps], marker = 'o', label= driver)
             color_list.append(color)
 
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
@@ -344,3 +399,24 @@ class F1Event:
 
         plt.suptitle(f"Car Characteristics\n{self.event.event['EventName']} {self.year} - {race_type_enum[self.modality]}")
         plt.savefig('car_characteristics', dpi=350)
+    
+    def position_changes(self):
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for drv in  list(np.unique(self.get_laps_race()['Driver'])):
+            drv_laps = self.event.laps.pick_driver(drv)
+
+            abb = drv_laps['Driver'].iloc[0]
+            if(abb == 'LAW' or abb == 'RIC'):
+                color = ff1.plotting.driver_color('DEV')
+            else:
+                color = ff1.plotting.driver_color(abb)
+
+            ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
+                    label=abb, color=color)
+        ax.set_ylim([20.5, 0.5])
+        ax.set_yticks([1, 5, 10, 15, 20])
+        ax.set_xlabel('Lap')
+        ax.set_ylabel('Position')
+        ax.legend(bbox_to_anchor=(1.0, 1.02))
+        plt.title(f"Race Positions - {self.event.event['EventName']} {self.year}")
+        plt.tight_layout()
