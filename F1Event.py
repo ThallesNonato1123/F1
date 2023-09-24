@@ -42,16 +42,19 @@ class F1Event:
     def get_laps_race(self):
         return self.event.laps
     
+    def get_drivers(self):
+        return list(self.event.results['Abbreviation'])
+    
     def plot_bargraph_times(self):
         list_fastest_laps = list()    
         for drv in self.event.results['Abbreviation']:
                 drvs_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
-                list_fastest_laps.append(drvs_fastest_lap)
+                if not pd.isna(drvs_fastest_lap['LapTime']):
+                    list_fastest_laps.append(drvs_fastest_lap)
         fastest_laps = Laps(list_fastest_laps).sort_values(by='LapTime').reset_index(drop=True)
 
         pole_lap = fastest_laps.pick_fastest()
         fastest_laps['LapTimeDelta'] = fastest_laps['LapTime'] - pole_lap['LapTime']
-
         team_colors = list()
         for index, lap in fastest_laps.iterlaps():
             color = ff1.plotting.team_color(lap['Team'])
@@ -112,6 +115,8 @@ class F1Event:
     def telemetry_between_drivers(self, drv1: str , drv2:str, lap_number:int = None):
         drv1_laps = self.event.laps.pick_driver(drv1)        
         drv2_laps = self.event.laps.pick_driver(drv2)
+        circuit_info = self.event.get_circuit_info()
+
 
         if lap_number == None:
             drv1_telemetry = drv1_laps.pick_fastest().get_telemetry().add_distance()
@@ -159,6 +164,14 @@ class F1Event:
         ax[1].plot(drv2_telemetry['Distance'], drv2_telemetry['Speed'], label = f'{drv2}', color = color_drv2)
         ax[1].set(ylabel = 'Speed', xlabel = "Distance")
         ax[1].legend(loc = "lower right")
+        ax[1].vlines(x=circuit_info.corners['Distance'], ymin=min(drv1_telemetry['Speed'].min(), drv2_telemetry['Speed'].min()) - 20, 
+                     ymax=max(drv1_telemetry['Speed'].max(), drv2_telemetry['Speed'].max())+20,
+          linestyles='dotted', colors='grey')
+        
+        for _, corner in circuit_info.corners.iterrows():
+            txt = f"T{corner['Number']}{corner['Letter']}"
+            ax[1].text(corner['Distance'], min(drv1_telemetry['Speed'].min(), drv2_telemetry['Speed'].min()) -30, txt,
+                    va='center_baseline', ha='center', size='small')
 
         ax[2].plot(drv1_telemetry['Distance'],drv1_telemetry['Throttle'], label = f'{drv1}', color = color_drv1)
         ax[2].plot(drv2_telemetry['Distance'], drv2_telemetry['Throttle'], label = f'{drv2}', color = color_drv2)
@@ -300,6 +313,10 @@ class F1Event:
         ax.invert_yaxis()
         ax.set_title(f"Tyre Strategy - {self.event.event['EventName']} {self.year}")
         plt.show()
+    
+    def circuit_info(self):
+        return self.event.get_circuit_info()
+
     
     def race_trace_chart(self, drivers = [], inilap = None, nlaps = None):
 
