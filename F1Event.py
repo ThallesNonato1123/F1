@@ -268,7 +268,8 @@ class F1Event:
         list_fastest_laps = list()  
         for drv in self.event.results['Abbreviation']:
             drvs_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
-            list_fastest_laps.append(drvs_fastest_lap)
+            if not pd.isna(drvs_fastest_lap['LapTime']):
+                list_fastest_laps.append(drvs_fastest_lap)
         fastest_laps = Laps(list_fastest_laps).sort_values(by='LapTime').reset_index(drop=True)
         driver_pole = fastest_laps.pick_fastest()
         lap_time_pole_string = strftimedelta( driver_pole['LapTime'], '%m:%s.%ms')
@@ -288,10 +289,11 @@ class F1Event:
 
         for drv in self.event.results['Abbreviation']:
                 drv_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
-                deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
-                color = ff1.plotting.team_color(f1_teams_engine[drv_fastest_lap['Team']])
-                ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
-                ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
+                if not pd.isna(drv_fastest_lap['LapTime']):
+                    deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
+                    color = ff1.plotting.team_color(f1_teams_engine[drv_fastest_lap['Team']])
+                    ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
+                    ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
         ax.set(xlabel='Speed- Telem Max. (km/h)', ylabel= 'LapTime Delta(s)')
         plt.suptitle(f"LapTime by Engine Manufacturer\n{self.event.event['EventName']} {self.year} \n"
                         f"Fastest Lap: {lap_time_pole_string} ({driver_pole['Driver']})")
@@ -357,7 +359,7 @@ class F1Event:
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
         ax.set(xlabel='Laps', ylabel= '<-- Driver behind // Driver ahead --> ')
         plt.title(f"Race Trace - {self.event.event['EventName']} {self.year}")
-        plt.savefig('Gap_To_Virtual_Driver_Bahrain.png', dpi=350)
+        plt.savefig(f"Race_Trace_{self.event.event['EventName']}png", dpi=350)
 
     def plot_top_speed(self):
         drslist = []
