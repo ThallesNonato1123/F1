@@ -359,7 +359,7 @@ class F1Event:
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
         ax.set(xlabel='Laps', ylabel= '<-- Driver behind // Driver ahead --> ')
         plt.title(f"Race Trace - {self.event.event['EventName']} {self.year}")
-        plt.savefig(f"Race_Trace_{self.event.event['EventName']}png", dpi=350)
+        plt.savefig(f"Race_Trace_{self.event.event['EventName']}", dpi=350)
 
     def plot_top_speed(self):
         drslist = []
