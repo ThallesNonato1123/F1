@@ -71,10 +71,6 @@ class F1Event:
         # show fastest at the top
         ax.invert_yaxis()
 
-        #     # draw vertical lines behind the bars
-        # ax.set_axisbelow(True)
-        # ax.xaxis.grid(True, which='major', linestyle='--', color='black', zorder=-1000)
-
         lap_time_string = strftimedelta(pole_lap['LapTime'], '%m:%s.%ms')
 
         plt.suptitle(f"{self.event.event['EventName']} {self.year} \n"
@@ -440,7 +436,7 @@ class F1Event:
         plt.title(f"Race Positions - {self.event.event['EventName']} {self.year}")
         plt.tight_layout()
 
-    def team_improvements(self):
+    def session_pace_evolution(self):
         q1, q2, q3 = self.event.laps.split_qualifying_sessions()
         fig, ax = plt.subplots()
         resultados_q1 = q1.groupby('Team')['LapTime'].min().reset_index().sort_values(by='LapTime', ascending=True)
@@ -460,7 +456,7 @@ class F1Event:
             team_data = resultados_totais[resultados_totais['Team'] == team]
             ax.plot(team_data['Qualify'], team_data['LapTimeSeconds'], label=team, marker='o', color=ff1.plotting.team_color(team))
         
-        ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
         ax.set(xlabel='Qualify', ylabel= 'LapTime (seconds)')
-        plt.suptitle(f"LapTime by Engine Manufacturer\n{self.event.event['EventName']} {self.year} \n"
+        ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+        plt.suptitle(f"{self.event.event['EventName']} {self.year} \n"
                         f"Session Pace Evolution")
