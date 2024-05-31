@@ -345,7 +345,10 @@ class F1Event:
         for driver in drivers:
             driver_laps = self.event.laps.pick_driver(driver)
             driver_laps['LapTimeSeconds'] = driver_laps['Time'].dt.total_seconds()
-            color = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop = True)[0])
+            try:
+                color = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop=True)[0])
+            except Exception as e:
+                color = "#800080"
             if color in color_list:
                 ax.plot(driver_laps['LapNumber'][inilap - 1:nlaps], virtual_driver.mean().reset_index(drop=True)[inilap - 1:len(driver_laps['LapTimeSeconds'][:nlaps])] - driver_laps['LapTimeSeconds'].reset_index(drop=True)[inilap - 1:nlaps], marker = 'o', label= driver, color = color, ls='--')
             else:
