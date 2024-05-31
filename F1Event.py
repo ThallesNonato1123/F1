@@ -161,8 +161,8 @@ class F1Event:
         ax[1].set(ylabel = 'Speed', xlabel = "Distance")
         ax[1].legend(loc = "lower right")
         ax[1].vlines(x=circuit_info.corners['Distance'], ymin=min(drv1_telemetry['Speed'].min(), drv2_telemetry['Speed'].min()) - 20, 
-                     ymax=max(drv1_telemetry['Speed'].max(), drv2_telemetry['Speed'].max())+20,
-          linestyles='dotted', colors='grey')
+                    ymax=max(drv1_telemetry['Speed'].max(), drv2_telemetry['Speed'].max())+20,
+        linestyles='dotted', colors='grey')
         
         for _, corner in circuit_info.corners.iterrows():
             txt = f"T{corner['Number']}{corner['Letter']}"
@@ -217,7 +217,7 @@ class F1Event:
 
         # Get minimum laptime per [Compound, TyreLife] and count of occurences of this combination
         tyredev = tyredev[['Compound', 'TyreLife', 'LapTime']].groupby(['Compound', 'TyreLife']). \
-                  agg({'LapTime': ['min', 'count']}).reset_index()
+                agg({'LapTime': ['min', 'count']}).reset_index()
         tyredev.columns = ['Compound', 'TyreLife', 'LapTime', 'Count']
 
 
@@ -325,7 +325,7 @@ class F1Event:
             inilap = 1
 
         if(drivers == []):
-            drivers = list(np.unique(self.get_laps_race()['Driver']))
+            drivers = list(self.get_drivers())
         
         average_driver_laptime = []
         for driver in self.event.results['Abbreviation'][:10]:
@@ -340,7 +340,7 @@ class F1Event:
         color_list = []
 
         if(drivers == []):
-           drivers = self.event.results['Abbreviation'] 
+            drivers = self.event.results['Abbreviation'] 
         
         for driver in drivers:
             driver_laps = self.event.laps.pick_driver(driver)
