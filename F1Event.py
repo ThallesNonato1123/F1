@@ -378,16 +378,18 @@ class F1Event:
         ax.legend()
         plt.show()
     
-    def gg_plot(self, drivers: list, lap_number:int = None):
+    def gg_plot(self, drivers: list, lap_number:list = None):
         fig, ax = plt.subplots(figsize=(12, 6.75))
-        if lap_number == None:
-            for driver in drivers:
-                driver_laps = self.event.laps.pick_driver(driver) 
-                color_drv = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop = True)[0])
+        for idx, driver in enumerate(drivers):
+            driver_laps = self.event.laps.pick_driver(driver) 
+            color_drv = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop = True)[0])
+            if lap_number == None:
                 driver_telemetry =  driver_laps.pick_fastest().get_telemetry()
-                ax.scatter(compute_accelerations(driver_telemetry)[1], compute_accelerations(driver_telemetry)[0], label= driver, color = color_drv)
-                ax.legend()
-        return
+            else:
+                driver_telemetry = driver_laps[driver_laps.LapNumber == lap_number[idx]].get_telemetry().add_distance()
+            ax.scatter(compute_accelerations(driver_telemetry)[1], compute_accelerations(driver_telemetry)[0], label= driver, color = color_drv)
+            ax.legend()
+        
     
     def plot_bargraph_team(self, session = 'q3'):
         
