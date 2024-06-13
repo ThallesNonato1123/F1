@@ -108,37 +108,39 @@ class F1Event:
         plt.show()
 
         
-    def telemetry_between_drivers(self, drv1: str , drv2:str, lap_number:int = None):
+    def telemetry_between_drivers(self, drv1: str , drv2:str, lap_number:list = []):
         drv1_laps = self.event.laps.pick_driver(drv1)        
         drv2_laps = self.event.laps.pick_driver(drv2)
         circuit_info = self.event.get_circuit_info()
 
 
-        if lap_number == None:
+        if lap_number == []:
             drv1_telemetry = drv1_laps.pick_fastest().get_telemetry().add_distance()
             drv2_telemetry = drv2_laps.pick_fastest().get_telemetry().add_distance()
             
             laps_drv_1 = drv1_laps.pick_fastest()
             laps_drv_2 = drv2_laps.pick_fastest()
+            lap_number.append(int(laps_drv_1['LapNumber']))
+            lap_number.append(int(laps_drv_2['LapNumber']))
 
             lap_time_drv_1 = drv1_laps.pick_fastest()['LapTime']
             lap_time_drv_2 = drv2_laps.pick_fastest()['LapTime']
         else:
-            drv1_telemetry = drv1_laps[drv1_laps.LapNumber == lap_number].get_telemetry().add_distance()
-            drv2_telemetry = drv2_laps[drv2_laps.LapNumber == lap_number].get_telemetry().add_distance()
+            drv1_telemetry = drv1_laps[drv1_laps.LapNumber == lap_number[0]].get_telemetry().add_distance()
+            drv2_telemetry = drv2_laps[drv2_laps.LapNumber == lap_number[1]].get_telemetry().add_distance()
     
-            laps_drv_1 = drv1_laps[drv1_laps.LapNumber == lap_number]
-            laps_drv_2 = drv2_laps[drv2_laps.LapNumber == lap_number]
+            laps_drv_1 = drv1_laps[drv1_laps.LapNumber == lap_number[0]]
+            laps_drv_2 = drv2_laps[drv2_laps.LapNumber == lap_number[1]]
 
-            lap_time_drv_1 = drv1_laps[drv1_laps.LapNumber == lap_number].reset_index()['LapTime'][0]
-            lap_time_drv_2 = drv2_laps[drv2_laps.LapNumber == lap_number].reset_index()['LapTime'][0]
+            lap_time_drv_1 = drv1_laps[drv1_laps.LapNumber == lap_number[0]].reset_index()['LapTime'][0]
+            lap_time_drv_2 = drv2_laps[drv2_laps.LapNumber == lap_number[1]].reset_index()['LapTime'][0]
 
         color_drv1 = ff1.plotting.team_color(drv1_laps['Team'].reset_index(drop = True)[0])
         color_drv2 = ff1.plotting.team_color(drv2_laps['Team'].reset_index(drop = True)[0])
         
 
         if(color_drv1 == color_drv2):
-             color_drv2 = "#B9DCE3"
+            color_drv2 = "#B9DCE3"
 
         delta_time , ref_tel , compare_tel = utils.delta_time(laps_drv_1, laps_drv_2)
 
@@ -156,8 +158,8 @@ class F1Event:
         ax[0].plot(ref_tel['Distance'], delta_time, ls='--')
         ax[0].set(ylabel=f"<-- {drv2}  ahead | {drv1} ahead -->")
 
-        ax[1].plot(drv1_telemetry['Distance'],drv1_telemetry['Speed'], label = f'{drv1}', color = color_drv1 )
-        ax[1].plot(drv2_telemetry['Distance'], drv2_telemetry['Speed'], label = f'{drv2}', color = color_drv2)
+        ax[1].plot(drv1_telemetry['Distance'],drv1_telemetry['Speed'], label = f'{drv1}  Lap: {lap_number[0]}', color = color_drv1 )
+        ax[1].plot(drv2_telemetry['Distance'], drv2_telemetry['Speed'], label = f'{drv2} Lap: {lap_number[1]}', color = color_drv2)
         ax[1].set(ylabel = 'Speed', xlabel = "Distance")
         ax[1].legend(loc = "lower right")
         ax[1].vlines(x=circuit_info.corners['Distance'], ymin=min(drv1_telemetry['Speed'].min(), drv2_telemetry['Speed'].min()) - 20, 
@@ -169,23 +171,23 @@ class F1Event:
             ax[1].text(corner['Distance'], min(drv1_telemetry['Speed'].min(), drv2_telemetry['Speed'].min()) -30, txt,
                     va='center_baseline', ha='center', size='small')
 
-        ax[2].plot(drv1_telemetry['Distance'],drv1_telemetry['Throttle'], label = f'{drv1}', color = color_drv1)
-        ax[2].plot(drv2_telemetry['Distance'], drv2_telemetry['Throttle'], label = f'{drv2}', color = color_drv2)
+        ax[2].plot(drv1_telemetry['Distance'],drv1_telemetry['Throttle'], label = f'{drv1}  Lap: {lap_number[0]}', color = color_drv1)
+        ax[2].plot(drv2_telemetry['Distance'], drv2_telemetry['Throttle'], label = f'{drv2} Lap: {lap_number[1]}', color = color_drv2)
         ax[2].set(ylabel = 'Throttle', xlabel = "Distance")
         ax[2].legend(loc = "lower right")
 
-        ax[3].plot(drv1_telemetry['Distance'],drv1_telemetry['Brake'], label = f'{drv1}', color = color_drv1)
-        ax[3].plot(drv2_telemetry['Distance'], drv2_telemetry['Brake'], label = f'{drv2}', color = color_drv2)
+        ax[3].plot(drv1_telemetry['Distance'],drv1_telemetry['Brake'], label = f'{drv1}  Lap: {lap_number[0]}', color = color_drv1)
+        ax[3].plot(drv2_telemetry['Distance'], drv2_telemetry['Brake'], label = f'{drv2} Lap: {lap_number[1]}', color = color_drv2)
         ax[3].set(ylabel = 'Brake', xlabel = "Distance")
         ax[3].legend(loc = "lower right")
 
-        ax[4].plot(drv1_telemetry['Distance'],compute_accelerations(drv1_telemetry)[0], label = f'{drv1}', color = color_drv1)
-        ax[4].plot(drv2_telemetry['Distance'], compute_accelerations(drv2_telemetry)[0], label = f'{drv2}', color = color_drv2)
+        ax[4].plot(drv1_telemetry['Distance'],compute_accelerations(drv1_telemetry)[0], label = f'{drv1}  Lap: {lap_number[0]}', color = color_drv1)
+        ax[4].plot(drv2_telemetry['Distance'], compute_accelerations(drv2_telemetry)[0], label = f'{drv2} Lap: {lap_number[1]}', color = color_drv2)
         ax[4].set(ylabel = 'Longitudinal Acelerration', xlabel = "Distance")
         ax[4].legend(loc = "lower right")
 
-        ax[5].plot(drv1_telemetry['Distance'],compute_accelerations(drv1_telemetry)[1], label = f'{drv1}', color = color_drv1)
-        ax[5].plot(drv2_telemetry['Distance'], compute_accelerations(drv2_telemetry)[1], label = f'{drv2}', color = color_drv2)
+        ax[5].plot(drv1_telemetry['Distance'],compute_accelerations(drv1_telemetry)[1], label = f'{drv1}  Lap: {lap_number[0]}', color = color_drv1)
+        ax[5].plot(drv2_telemetry['Distance'], compute_accelerations(drv2_telemetry)[1], label = f'{drv2} Lap: {lap_number[1]}', color = color_drv2)
         ax[5].set(ylabel = 'Lateral Acelerration', xlabel = "Distance")
         ax[5].legend(loc = "lower right")
     
