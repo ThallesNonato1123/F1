@@ -393,21 +393,49 @@ class F1Event:
             ax.legend()
         
     
-    def plot_bargraph_team(self, session = 'q3'):
-        
-        q1, q2 , q3 = self.event.laps.split_qualifying_sessions()
-        if(session == 'q1'):
+    def plot_bargraph_team(self, session='q3'):
+        q1, q2, q3 = self.event.laps.split_qualifying_sessions()
+
+        if session == 'q1':
             best_team_laptimes = q1.groupby('Team')['LapTime'].min().reset_index()
-        elif(session == 'q2'):
+        elif session == 'q2':
             best_team_laptimes = q2.groupby('Team')['LapTime'].min().reset_index()
         else:
             best_team_laptimes = q3.groupby('Team')['LapTime'].min().reset_index()
-        
-        best_team_laptimes['LapTime'] = pd.to_timedelta(best_team_laptimes['LapTime'] - best_team_laptimes['LapTime'].min()).dt.total_seconds()
+
+        # Calcular a diferença de tempo em segundos
+        best_team_laptimes['LapTime'] = pd.to_timedelta(
+            best_team_laptimes['LapTime'] - best_team_laptimes['LapTime'].min()
+        ).dt.total_seconds()
+
+        # Criar o gráfico
         plt.figure(figsize=(12, 6.75))
-        sns.barplot(x='LapTime', y='Team', data=best_team_laptimes.sort_values(by='LapTime', ascending= True),  palette=[ff1.plotting.team_color(team) for team in best_team_laptimes.sort_values(by='LapTime', ascending= True)['Team']])
-        plt.grid(axis='both', linestyle='--', alpha=0.7)
+        ax = sns.barplot(
+            x='LapTime', y='Team', data=best_team_laptimes.sort_values(by='LapTime', ascending=True),
+            hue='Team',
+            palette=[ ff1.plotting.team_color(team) for team in best_team_laptimes.sort_values(by='LapTime', ascending=True)["Team"]]  # Usando 'hue' para aplicar automaticamente as cores para cada equipe
+        )
+
+        # Adicionar rótulos de LapTime ao lado das barras com cor branca
+        for p in ax.patches:
+            # Para evitar que o rótulo se sobreponha, ajustamos a posição
+            width = p.get_width()
+            ax.annotate(
+                f'{width:.2f}s',  # Formatação do texto
+                (width, p.get_y() + p.get_height() / 2),  # Posição do rótulo
+                xytext=(5, 0),  # Ajuste da posição do texto em relação à barra
+                textcoords='offset points',
+                va='center', ha='left', color='white', fontsize=10  # Cor branca para os rótulos
+            )
+
+        # Ajustes do gráfico
+        plt.grid(axis='both', linestyle='--', alpha=0.1)
+        plt.xlabel("LapTime (segundos)")
+        plt.ylabel("Equipe")
+        plt.title(f"Melhores Tempos por Equipe na Sessão {session.upper()}")
+        plt.legend(title='Equipe')  # Adicionar a legenda com título
         plt.show()
+
 
     
     def plot_car_characteristics(self):
