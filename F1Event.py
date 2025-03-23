@@ -90,17 +90,17 @@ class F1Event:
         sorted_data_s3 = pd.DataFrame(self.event.laps.sort_values(by='Sector3TimeSeconds').drop_duplicates(subset='Driver')[0:8].reset_index())
 
         # Gráfico 1: Popularidade x Energia com escala logarítmica
-        sns.barplot(data=sorted_data_s1, x="Sector1TimeSeconds", y="Driver", ax=axes[0], errorbar=None)
+        sns.barplot(data=sorted_data_s1, x="Sector1TimeSeconds", y="Driver", ax=axes[0], errorbar=None, hue="Driver")
         axes[0].set_title('S1 Time')
         xmin = sorted_data_s1['Sector1TimeSeconds'][0]
         axes[0].set_xlim(xmin=xmin , xmax = sorted_data_s1['Sector1TimeSeconds'][6] + 0.2)
 
-        sns.barplot(data=sorted_data_s2, x="Sector2TimeSeconds", y="Driver", ax=axes[1], errorbar=None)
+        sns.barplot(data=sorted_data_s2, x="Sector2TimeSeconds", y="Driver", ax=axes[1], errorbar=None, hue="Driver")
         axes[1].set_title('S2 Time')
         xmin = sorted_data_s2['Sector2TimeSeconds'][0]
         axes[1].set_xlim(xmin=xmin , xmax = sorted_data_s2['Sector2TimeSeconds'][6]+ 0.2)
 
-        sns.barplot(data=sorted_data_s3, x="Sector3TimeSeconds", y="Driver", ax=axes[2], errorbar=None)
+        sns.barplot(data=sorted_data_s3, x="Sector3TimeSeconds", y="Driver", ax=axes[2], errorbar=None , hue="Driver")
         axes[2].set_title('S3 Time')
         xmin = sorted_data_s3['Sector3TimeSeconds'][0]
         axes[2].set_xlim(xmin=xmin , xmax = sorted_data_s3['Sector3TimeSeconds'][6]+ 0.2)
