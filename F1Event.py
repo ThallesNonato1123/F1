@@ -279,8 +279,8 @@ class F1Event:
                           'Haas F1 Team': 'Ferrari', 
                           'Aston Martin': 'Mercedes', 
                           'Alpine' : 'Alpine',
-                          'Alfa Romeo': 'Ferrari',
-                          'AlphaTauri': 'Red Bull Racing', 
+                          'Kick Sauber': 'Ferrari',
+                          'Racing Bulls': 'Red Bull Racing', 
                           'McLaren': 'Mercedes',
                           'Mercedes': 'Mercedes',
                           'Williams': 'Mercedes'}
