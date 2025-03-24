@@ -17,6 +17,7 @@ race_type_enum = {
     'Q': 'Qualifying',
     'R': 'Race',
     'S': 'Sprint Race',
+    'SQ': 'Sprint Qualify',
     'SS': 'Sprint Shootout',
     'FP1': 'FP1',
     'FP2': 'FP2',
