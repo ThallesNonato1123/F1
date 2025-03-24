@@ -466,8 +466,8 @@ class F1Event:
             drv_laps = self.event.laps.pick_driver(drv)
 
             abb = drv_laps['Driver'].iloc[0]
-            if(abb == 'LAW' or abb == 'RIC'):
-                color = ff1.plotting.driver_color('DEV')
+            if(abb == 'BOR' or abb == 'HUL'):
+                color = ff1.plotting.driver_color('ZHO')
             else:
                 color = ff1.plotting.driver_color(abb)
 
