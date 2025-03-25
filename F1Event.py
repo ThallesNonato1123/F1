@@ -7,10 +7,10 @@ import seaborn as sns
 from fastf1.core import Laps
 from fastf1 import utils
 from fastf1 import plotting
-from datetime import timedelta
 from timple.timedelta import strftimedelta
 from fastf1 import plotting
 from aceleration import compute_accelerations
+from typing import Optional
 
 
 race_type_enum = {
@@ -197,7 +197,7 @@ class F1Event:
         drv1_telemetry = drv1_laps.pick_fastest().get_telemetry().add_distance()
         return drv1_telemetry
     
-    def plot_tyre_degredation(self, drv:str = None):
+    def plot_tyre_degredation(self, drv: Optional[str] = None):
         
         if drv != None:
             tyredev = self.event.laps.pick_drivers(drv).pick_quicklaps()
@@ -381,17 +381,19 @@ class F1Event:
         ax.legend()
         plt.show()
     
-    def gg_plot(self, drivers: list, lap_number:list = None):
+    def gg_plot(self, drivers: list, lap_number: Optional[list] = None):
         fig, ax = plt.subplots(figsize=(12, 6.75))
         for idx, driver in enumerate(drivers):
             driver_laps = self.event.laps.pick_drivers(driver) 
-            color_drv = ff1.plotting.get_team_color(driver_laps['Team'].reset_index(drop = True)[0],session = self.event)
-            if lap_number == None:
-                driver_telemetry =  driver_laps.pick_fastest().get_telemetry()
+            color_drv = ff1.plotting.get_team_color(driver_laps['Team'].reset_index(drop=True)[0], session=self.event)
+            
+            if lap_number is None:
+                driver_telemetry = driver_laps.pick_fastest().get_telemetry()
             else:
                 driver_telemetry = driver_laps[driver_laps.LapNumber == lap_number[idx]].get_telemetry().add_distance()
-            ax.scatter(compute_accelerations(driver_telemetry)[1], compute_accelerations(driver_telemetry)[0], label= driver, color = color_drv)
-            ax.legend()
+            ax.scatter(compute_accelerations(driver_telemetry)[1], compute_accelerations(driver_telemetry)[0], label=driver, color=color_drv)
+        
+        ax.legend()
         
     
     def plot_bargraph_team(self, session='q3'):
