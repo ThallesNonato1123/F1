@@ -38,7 +38,7 @@ class F1Event:
         plotting.setup_mpl()
 
     def get_laps(self, drv:str):
-        return self.event.laps.pick_driver(drv)
+        return self.event.laps.pick_drivers(drv)
     
     def get_laps_race(self):
         return self.event.laps
@@ -49,7 +49,7 @@ class F1Event:
     def plot_bargraph_times(self):
         list_fastest_laps = list()    
         for drv in self.event.results['Abbreviation']:
-                drvs_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
+                drvs_fastest_lap = self.event.laps.pick_drivers(drv).pick_fastest()
                 if not pd.isna(drvs_fastest_lap['LapTime']):
                     list_fastest_laps.append(drvs_fastest_lap)
         fastest_laps = Laps(list_fastest_laps).sort_values(by='LapTime').reset_index(drop=True)
@@ -58,7 +58,7 @@ class F1Event:
         fastest_laps['LapTimeDelta'] = fastest_laps['LapTime'] - pole_lap['LapTime']
         team_colors = list()
         for index, lap in fastest_laps.iterlaps():
-            color = ff1.plotting.team_color(lap['Team'])
+            color = ff1.plotting.get_team_color(lap['Team'], session = self.event)
             team_colors.append(color)
 
 
@@ -110,8 +110,8 @@ class F1Event:
 
         
     def telemetry_between_drivers(self, drv1: str , drv2:str, lap_number:list = []):
-        drv1_laps = self.event.laps.pick_driver(drv1)        
-        drv2_laps = self.event.laps.pick_driver(drv2)
+        drv1_laps = self.event.laps.pick_drivers(drv1)        
+        drv2_laps = self.event.laps.pick_drivers(drv2)
         circuit_info = self.event.get_circuit_info()
 
 
@@ -136,8 +136,8 @@ class F1Event:
             lap_time_drv_1 = drv1_laps[drv1_laps.LapNumber == lap_number[0]].reset_index()['LapTime'][0]
             lap_time_drv_2 = drv2_laps[drv2_laps.LapNumber == lap_number[1]].reset_index()['LapTime'][0]
 
-        color_drv1 = ff1.plotting.team_color(drv1_laps['Team'].reset_index(drop = True)[0])
-        color_drv2 = ff1.plotting.team_color(drv2_laps['Team'].reset_index(drop = True)[0])
+        color_drv1 = ff1.plotting.get_team_color(drv1_laps['Team'].reset_index(drop = True)[0], session = self.event)
+        color_drv2 = ff1.plotting.get_team_color(drv2_laps['Team'].reset_index(drop = True)[0], session = self.event)
         
 
         if(color_drv1 == color_drv2):
@@ -193,14 +193,14 @@ class F1Event:
         ax[5].legend(loc = "lower right")
     
     def get_telemetry(self, drv1):
-        drv1_laps = self.event.laps.pick_driver(drv1)  
+        drv1_laps = self.event.laps.pick_drivers(drv1)  
         drv1_telemetry = drv1_laps.pick_fastest().get_telemetry().add_distance()
         return drv1_telemetry
     
     def plot_tyre_degredation(self, drv:str = None):
         
         if drv != None:
-            tyredev = self.event.laps.pick_driver(drv).pick_quicklaps()
+            tyredev = self.event.laps.pick_drivers(drv).pick_quicklaps()
         else:
             tyredev = self.event.laps[self.event.laps.TrackStatus == '1']
         
@@ -239,7 +239,7 @@ class F1Event:
         _ = ax.set_ylabel('Fuel-Corrected Laptime (s)')
 
     def driver_laptimes(self, drv):
-        driver_laps = self.event.laps.pick_driver(drv).pick_quicklaps().reset_index()
+        driver_laps = self.event.laps.pick_drivers(drv).pick_quicklaps().reset_index()
 
         nolaps = self.event.total_laps
         totfuel = 110
@@ -266,7 +266,7 @@ class F1Event:
         
         list_fastest_laps = list()  
         for drv in self.event.results['Abbreviation']:
-            drvs_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
+            drvs_fastest_lap = self.event.laps.pick_drivers(drv).pick_fastest()
             if not pd.isna(drvs_fastest_lap['LapTime']):
                 list_fastest_laps.append(drvs_fastest_lap)
         fastest_laps = Laps(list_fastest_laps).sort_values(by='LapTime').reset_index(drop=True)
@@ -287,10 +287,10 @@ class F1Event:
                           'Williams': 'Mercedes'}
 
         for drv in self.event.results['Abbreviation']:
-                drv_fastest_lap = self.event.laps.pick_driver(drv).pick_fastest()
+                drv_fastest_lap = self.event.laps.pick_drivers(drv).pick_fastest()
                 if not pd.isna(drv_fastest_lap['LapTime']):
                     deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
-                    color = ff1.plotting.team_color(f1_teams_engine[drv_fastest_lap['Team']])
+                    color = ff1.plotting.get_team_color(f1_teams_engine[drv_fastest_lap['Team']], session= self.event)
                     ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
                     ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
         ax.set(xlabel='Speed- Telem Max. (km/h)', ylabel= 'LapTime Delta(s)')
@@ -332,7 +332,7 @@ class F1Event:
         
         average_driver_laptime = []
         for driver in self.event.results['Abbreviation'][:10]:
-            driver_laps = self.event.laps.pick_driver(driver)
+            driver_laps = self.event.laps.pick_drivers(driver)
             driver_laps['LapTimeSeconds'] = driver_laps['Time'].dt.total_seconds()
             average_driver_laptime.append(driver_laps['LapTimeSeconds'].reset_index(drop = True))
         virtual_driver = pd.DataFrame(average_driver_laptime)
@@ -346,10 +346,10 @@ class F1Event:
             drivers = self.event.results['Abbreviation'] 
         
         for driver in drivers:
-            driver_laps = self.event.laps.pick_driver(driver)
+            driver_laps = self.event.laps.pick_drivers(driver)
             driver_laps['LapTimeSeconds'] = driver_laps['Time'].dt.total_seconds()
             try:
-                color = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop=True)[0])
+                color = ff1.plotting.get_team_color(driver_laps['Team'].reset_index(drop=True)[0], session = self.event)
             except Exception as e:
                 color = "#800080"
             if color in color_list:
@@ -366,7 +366,7 @@ class F1Event:
     def plot_top_speed(self):
         drslist = []
         for driver in self.event.laps.Driver.unique():
-            drs = self.event.laps.pick_driver(driver).get_telemetry()[['Speed', 'DRS']].groupby('DRS').max()
+            drs = self.event.laps.pick_drivers(driver).get_telemetry()[['Speed', 'DRS']].groupby('DRS').max()
             withoutDRS = drs[drs.index < 5]['Speed'].max()
             withDRS = drs[drs.index > 5]['Speed'].max()
             drslist.append({'Driver':driver, 'DRS':withDRS, 'noDRS': withoutDRS})
@@ -384,8 +384,8 @@ class F1Event:
     def gg_plot(self, drivers: list, lap_number:list = None):
         fig, ax = plt.subplots(figsize=(12, 6.75))
         for idx, driver in enumerate(drivers):
-            driver_laps = self.event.laps.pick_driver(driver) 
-            color_drv = ff1.plotting.team_color(driver_laps['Team'].reset_index(drop = True)[0])
+            driver_laps = self.event.laps.pick_drivers(driver) 
+            color_drv = ff1.plotting.get_team_color(driver_laps['Team'].reset_index(drop = True)[0],session = self.event)
             if lap_number == None:
                 driver_telemetry =  driver_laps.pick_fastest().get_telemetry()
             else:
@@ -414,7 +414,7 @@ class F1Event:
         ax = sns.barplot(
             x='LapTime', y='Team', data=best_team_laptimes.sort_values(by='LapTime', ascending=True),
             hue='Team',
-            palette=[ ff1.plotting.team_color(team) for team in best_team_laptimes.sort_values(by='LapTime', ascending=True)["Team"]]  # Usando 'hue' para aplicar automaticamente as cores para cada equipe
+            palette=[ ff1.plotting.get_team_color(team, session = self.event) for team in best_team_laptimes.sort_values(by='LapTime', ascending=True)["Team"]]  # Usando 'hue' para aplicar automaticamente as cores para cada equipe
         )
 
         # Adicionar rótulos de LapTime ao lado das barras com cor branca
@@ -448,9 +448,9 @@ class F1Event:
         plt.rcParams["figure.figsize"] = [12, 6]
         fig, ax = plt.subplots()
         for drv in df['Driver']:
-            color = ff1.plotting.team_color(laps.pick_driver(drv)['Team'].reset_index(drop = True)[0])
-            telemetry = laps.pick_driver(drv).pick_fastest().get_telemetry()
-            high_speed.append((telemetry['Speed'].mean(),color, telemetry['Speed'].max(), laps.pick_driver(drv)['Team'].reset_index(drop = True)[0]))
+            color = ff1.plotting.get_team_color(laps.pick_drivers(drv)['Team'].reset_index(drop = True)[0], session = self.event)
+            telemetry = laps.pick_drivers(drv).pick_fastest().get_telemetry()
+            high_speed.append((telemetry['Speed'].mean(),color, telemetry['Speed'].max(), laps.pick_drivers(drv)['Team'].reset_index(drop = True)[0]))
 
         ax.set(xlabel='Mean Speed (km/h)', ylabel= 'Top Speed (km/h)')
         plt.scatter(list(zip(*high_speed))[0],list(zip(*high_speed))[2], color = list(zip(*high_speed))[1])
@@ -463,17 +463,15 @@ class F1Event:
     
     def position_changes(self):
         fig, ax = plt.subplots(figsize=(12, 6))
-        for drv in  list(np.unique(self.get_laps_race()['Driver'])):
-            drv_laps = self.event.laps.pick_driver(drv)
+        for drv in list(np.unique(self.get_laps_race()['Driver'])):
+            drv_laps = self.event.laps.pick_drivers(drv)
 
             abb = drv_laps['Driver'].iloc[0]
-            if(abb == 'BOR' or abb == 'HUL'):
-                color = ff1.plotting.driver_color('ZHO')
-            else:
-                color = ff1.plotting.driver_color(abb)
+            color = ff1.plotting.get_driver_color(abb, self.event)  # Atualizado conforme aviso
 
             ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
                     label=abb, color=color)
+        
         ax.set_ylim([20.5, 0.5])
         ax.set_yticks([1, 5, 10, 15, 20])
         ax.set_xlabel('Lap')
@@ -500,7 +498,7 @@ class F1Event:
         # Crie um gráfico de linha para cada equipe
         for team in resultados_totais['Team'].unique():
             team_data = resultados_totais[resultados_totais['Team'] == team]
-            ax.plot(team_data['Qualify'], team_data['LapTimeSeconds'], label=team, marker='o', color=ff1.plotting.team_color(team))
+            ax.plot(team_data['Qualify'], team_data['LapTimeSeconds'], label=team, marker='o', color=ff1.plotting.get_team_color(team, session = self.event))
         
         ax.set(xlabel='Qualify', ylabel= 'LapTime (seconds)')
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
@@ -510,8 +508,8 @@ class F1Event:
     def plot_race_pace(self,drivers = []):
         fig, ax = plt.subplots(figsize=(12, 6))
         for drv in drivers:
-            drv1_laps = self.event.laps.pick_driver(drv)
-            ax.plot(drv1_laps["LapNumber"], drv1_laps['LapTime'] / np.timedelta64(1, 's'), label=drv, marker="o")
+            drv1_laps = self.event.laps.pick_drivers(drv)
+            ax.plot(drv1_laps["LapNumber"], drv1_laps['LapTime'] / np.timedelta64(1, 's'), label=drv, marker= "o")
         ax.set_xlabel('Lap')
         ax.set_ylabel('LapTime')
         ax.legend()
