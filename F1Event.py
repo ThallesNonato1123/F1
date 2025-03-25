@@ -290,7 +290,7 @@ class F1Event:
                 drv_fastest_lap = self.event.laps.pick_drivers(drv).pick_fastest()
                 if not pd.isna(drv_fastest_lap['LapTime']):
                     deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
-                    color = ff1.plotting.get_team_color(f1_teams_engine[drv_fastest_lap['Team']], session= self.event)
+                    color = ff1.plotting.get_team_color(f1_teams_engine[drv_fastest_lap['Team']], session= self.even)
                     ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
                     ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
         ax.set(xlabel='Speed- Telem Max. (km/h)', ylabel= 'LapTime Delta(s)')
@@ -463,7 +463,7 @@ class F1Event:
     
     def position_changes(self):
         fig, ax = plt.subplots(figsize=(12, 6))
-        for drv in list(np.unique(self.get_laps_race()['Driver'])):
+        for drv in self.event.results['Abbreviation']:
             drv_laps = self.event.laps.pick_drivers(drv)
 
             abb = drv_laps['Driver'].iloc[0]
