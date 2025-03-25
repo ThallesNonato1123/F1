@@ -506,3 +506,14 @@ class F1Event:
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
         plt.suptitle(f"{self.event.event['EventName']} {self.year} \n"
                         f"Session Pace Evolution")
+    
+    def plot_race_pace(self,drivers = []):
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for drv in drivers:
+            drv1_laps = self.event.laps.pick_driver(drv)
+            ax.plot(drv1_laps["LapNumber"], drv1_laps['LapTime'] / np.timedelta64(1, 's'), label=drv, marker="o")
+        ax.set_xlabel('Lap')
+        ax.set_ylabel('LapTime')
+        ax.legend()
+        plt.title(f"Race Pace - {self.event.event['EventName']} {self.year}")
+
