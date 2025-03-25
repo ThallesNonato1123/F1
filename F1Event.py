@@ -290,7 +290,7 @@ class F1Event:
                 drv_fastest_lap = self.event.laps.pick_drivers(drv).pick_fastest()
                 if not pd.isna(drv_fastest_lap['LapTime']):
                     deltaTime = drv_fastest_lap['LapTime'] - driver_pole['LapTime'] 
-                    color = ff1.plotting.get_team_color(f1_teams_engine[drv_fastest_lap['Team']], session= self.even)
+                    color = ff1.plotting.get_team_color(f1_teams_engine[drv_fastest_lap['Team']], session= self.event)
                     ax.scatter(drv_fastest_lap.get_telemetry()['Speed'].max(), pd.Timedelta(deltaTime).total_seconds(), color = color)
                     ax.text(drv_fastest_lap.get_telemetry()['Speed'].max() + 0.1, pd.Timedelta(deltaTime).total_seconds() + 0.03, drv)
         ax.set(xlabel='Speed- Telem Max. (km/h)', ylabel= 'LapTime Delta(s)')
